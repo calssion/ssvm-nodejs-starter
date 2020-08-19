@@ -1,105 +1,86 @@
-# Getting started
+# 1、背景
+近期，参与了一个活动：[学 Rust，免费拿树莓派](https://segmentfault.com/a/1190000023363546)。  
 
-![Build and test](https://github.com/second-state/ssvm-nodejs-starter/workflows/Build%20and%20test/badge.svg)
+主要内容为开发应用，在 `node.js` 中调用 `Rust` 函数。  
 
-[Fork this project](https://github.com/second-state/ssvm-nodejs-starter/fork) to create your own Rust functions in Node.js. [Learn more](https://www.secondstate.io/articles/getting-started-rust-nodejs-vscode/)
+实际上我认为在很多地方都能用上 `Rust`，鉴于活动要求，或许 `node.js` 是一个不错的切入点，毕竟提供了模版，应该会更快熟悉。  
 
-* The Rust functions are in the `src` directory. You can put high performance workload into Rust functions.
-* The JavaScript functions are in the `node` directory and they can access the Rust functions.
-* Use the `node node/app.js` command to run the application in Node.js.
+难点就在于这两，我都没有相关的知识，不过这挑战我接受，学呗！  
+工作党，所以就每天挤出点时间来进行了。
 
+# 2、配置环境
+配置环境算是每个开发者必须跨过的第一道门槛了。  
 
-## Use Docker to build and run
+根据[教程的环境要求](https://www.secondstate.io/articles/get-started-with-rust-functions-in-node-zh/)，需要使用 `linux` 系统。  
 
+在我的5年老笔记本联想电脑上，是有双系统安装 `ubuntu` 的，但编译操作需要与外网的连通性，网络问题成为了最大的瓶颈。  
+搜了一圈，`ubuntu` 的代理工具基本上是要自己配置，多翻代理操作下来，终端能与某些外网连通了，但还是会卡在 `ssvmup build`，使用 `docker` 无解后，又转向了自己手工搭建环境，但会报 `permission denied`，加上 `sudo` 也毫无作用，连 `chmod 777` 也未果。   
+
+后来觉得还是用 `docker` 会比较靠谱，毕竟是别人已经实践过的环境，所以首要目标就是解决网络问题。  
+然后就想到了使用虚拟机来安装 `ubuntu` ，网络问题通过桥接主机的代理来解决，实验了一番，终于把 `hello world` 模版跑成功了[泪目]。  
+
+相关的 `docker` 镜像有如下三个：  
 ```
-$ docker pull secondstate/ssvm-nodejs-starter:v1
-$ docker run -p 3000:3000 --rm -it -v $(pwd):/app secondstate/ssvm-nodejs-starter:v1
-(docker) # cd /app
-(docker) # ssvmup build
-(docker) # node node/app.js
+ssvm-nodejs:v1
+secondstate/ssvm-nodejs-starter:v1
+registry.cn-hangzhou.aliyuncs.com/chirsz/ssvm-nodejs:latest
 ```
+第三个是评论区网友整的，最终我采用第二个镜像进行操作。  
 
-From a second terminal window, you can test the local server.
+# 3、熟悉代码
+虽然能跑了，但实际的代码还不清楚其原理，所以要先熟悉代码。  
+对于学习代码，我主要采用的是先了解相关工具，再看大致代码。  
+- ## the cargo config file
+The Cargo.toml file shows the dependencies.   
+Note the dependency for wasm-bindgen,   
+which is required for invoking these Rust functions from JavaScript.   
+The dependency for serde and serde-json allows us to work with JSON strings to represent complex data types.  
+- ## wasm-pack
+工具 wasm-pack，它会帮助我们把我们的代码编译成 WebAssembly 并制造出正确的 npm 包。  
+- ## SSVM
+The Second State VM (SSVM) is a high-performance WebAssembly runtime optimized for server-side applications.   
+This project provides support for accessing SSVM as a Node.js addon.   
+It allows Node.js applications to call WebAssembly functions written in Rust or other high-performance languages.
+- ## ssvmup
+The ssvmup uses wasm-bindgen to automatically generate the “glue” code between JavaScript and Rust source code   
+so that they can communicate using their native data types.   
+Without it, the function arguments and return values would be limited to very simple types   
+(i.e., 32-bit integers) supported natively by WebAssembly.   
+用＃[wasm_bindgen]注释每个函数。加过注释后，   
+ssvmup 在构建 Rust 函数时，知道生成正确的 JavaScript 到 Rust 接口。  
+生成的文件保存在 pkg/ 目录， .wasm 文件是 WebAssembly 字节码程序，.js文件用于JavaScript模块。
+- ## Wasm
+Wasm is a machine-close, platform-independent, low-level, assembly-like language (Reiser and Bläser, 2017),   
+and is the first mainstream programming language to implement formal semantics,   
+right from the start (Rossberg et al., 2018).  
+- ## Dockerfile
+Dockerfile 是一个文本文件，其内包含了一条条的 指令(Instruction)，  
+每一条指令构建一层，因此每一条指令的内容，就是描述该层应当如何构建。  
 
+# 4、尝试玩耍
+Rust 主要用在一些需要高性能效果的地方，我没有学过 node.js 和 前端的内容，只能简单地做个 demo，把一些吃紧的函数操作用 Rust 来进行替换。  
+这个 demo 是一个简单的裁剪图片的前端页面，当点击页面按钮，就裁剪图片，然后显示裁剪后的图片，每点击一次，就裁剪一次。  
+## 运行步骤
+Must have Node.js installed with the following packages.   
 ```
-$ curl http://localhost:3000/?name=SSVM
-hello SSVM
+$ npm i ssvm sync-request better-sqlite3
+$ npm i -g ssvmup
+$ npm i -g wasm-pack
 ```
-
-
-## Use VSCode Codespace
-
-<p>
-    <a href="https://online.visualstudio.com/environments/new?name=Rust%20and%20WebAssembly%20in%20Node.js&repo=second-state/ssvm-nodejs-starter">
-        <img src="https://img.shields.io/endpoint?style=social&url=https%3A%2F%2Faka.ms%2Fvso-badge">
-    </a>
-</p>
-
-![SSVM](https://github.com/second-state/blog/blob/master/static/images/SSVM-edited-without-music.gif?raw=true)
-
-This project template works with the VS Codespaces online IDE! Code, build, and run directly from inside the browser. No software download or install needed! Check out the [high-res screencast](https://youtu.be/j85cbNsciOs).
-
-> VS Codespaces runs entirely in your browser and costs around $1 per work day. It is cheaper than a cup of coffee in the office. Alternatively, use locally installed VSCode and Docker, and [launch the IDE with your remote git repository](https://code.visualstudio.com/remote-tutorials/containers/getting-started).
-
-1 First, open the [VS Codespaces](https://online.visualstudio.com/) web site and login with your Azure account. You can get a [free Azure account](https://azure.microsoft.com/en-us/free/).
-
-2 Next, create a new Codespace. Put your forked repository into the Git Repository field.
-
-![Create a new Codespace](docs/img/vscode_create.png)
-
-3 Then open the `src/lib.rs`, `node/app.js` and `Cargo.toml` files and see how the Node.js express app calls the Rust function to say hello.
-
-![Code in Codespace](docs/img/vscode_code.png)
-
-4 Click on the Run button on the left panel, and then the Launch Program at the top to build and run the application.
-
-![Build and run](docs/img/vscode_run.png)
-
-The Terminal window at the bottom shows the build progress. It builds the Rust program, and then launches the Node.js app.
-
-![Build](docs/img/vscode_build.png)
-
-The Debug window shows the Node.js server running and waiting for web requests.
-
-![Debug](docs/img/vscode_debug.png)
-
-5 Now, you have two choices. You could use the proxy link for `127.0.0.1:3000` to access the running server in a browser.
-
-![Browser link](docs/img/vscode_port.png)
-
-Or, you could open another terminal window in the IDE via the `Terminal -> New Terminal` menu.
-
-![Open Terminal](docs/img/vscode_terminal.png)
-
-From the terminal window, you can test the local server.
-
+The Rust functions that make Node.js calls are in the src/lib.rs file.  
 ```
-$ curl http://127.0.0.1:3000/?name=SSVM
-hello SSVM
+$ wasm-pack build --target nodejs
 ```
+运行服务  
+```
+$ node node/app.js
+```
+打开 public/show_pic.html 即可运行  
 
-### More exercises
-
-Now, you can copy and paste code from [this project](https://github.com/second-state/wasm-learning/tree/master/nodejs/functions).
-
-* `src/lib.rs` --> Replace with [code here](https://github.com/second-state/wasm-learning/blob/master/nodejs/functions/src/lib.rs)
-* `Cargo.toml` --> Replace with [code here](https://github.com/second-state/wasm-learning/blob/master/nodejs/functions/Cargo.toml)
-* `node/app.js` --> Replace with [code here](https://github.com/second-state/wasm-learning/blob/master/nodejs/functions/node/app.js)
-
-Click on Run to see the build output in Terminal window, and application console output in Debug window.
-
-Try to log into GitHub from the IDE, and use the IDE's GitHub integration features to commit the changes, push the changes back into your forked repository, and perhaps even send us a Pull Request from the IDE!
-
-## Read more:
-
-* [The Case for WebAssembly on the Server-side](https://www.secondstate.io/articles/why-webassembly-server/)
-* [Guide on how to Rust and WebAssembly for server-side apps](https://www.secondstate.io/articles/getting-started-with-rust-function/)
-
-## Resources
-
-* [The Second State VM (SSVM)](https://github.com/second-state/ssvm) is a high performance [WebAssembly virtual machine](https://www.secondstate.io/ssvm/) designed for server-side applications.
-* [The SSVM NPM addon](https://github.com/second-state/ssvm-napi) provides access to the SSVM, and programs in it, through a Node.js host application.
-* [The SSVM ready tool, ssvmup](https://github.com/second-state/ssvmup) is a [toolchain](https://www.secondstate.io/articles/ssvmup/) for compiling Rust programs into WebAssembly, and then make them accessible from JavaScripts via the SSVM.
-
-Brought to you by the Open source dev team at [Second State](https://www.secondstate.io/). Follow us on [Twitter](https://twitter.com/secondstateinc), [Facebook](https://www.facebook.com/SecondState.io/), [LinkedIn](https://www.linkedin.com/company/second-state/), [YouTube](https://www.youtube.com/channel/UCePMT5duHcIbJlwJRSOPDMQ), or [Medium](https://medium.com/wasm)
-
+# 5、总结
+在这里，Rust 主要充当了一个优化器的角色，把一些性能要求高的操作编成 Wasm，供其他语言进行操作。  
+在网上也看到很多有意思的操作，像人工智能、网络交互等场景都可以用上。  
+整个操作过程，遇到最多的问题是环境问题和网络问题，主要是使用的这些工具需要网络的支持，还有 ubuntu 的权限限制。  
+## 参考链接
+[入门文档：在 Node.js 应用中调用 Rust 函数](https://www.secondstate.io/articles/get-started-with-rust-functions-in-node-zh/)  
+[Learning WebAssembly, Rust, and Node.js](https://github.com/second-state/wasm-learning)
