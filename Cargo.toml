@@ -4,9 +4,6 @@ version = "0.1.0"
 authors = ["fcs"]
 edition = "2018"
 
-[package.metadata.ssvmup.profile.release]
-wasm-opt = ['-O4']
-
 [lib]
 name = "ssvm_nodejs_starter_lib"
 path = "src/lib.rs"

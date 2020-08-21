@@ -22,6 +22,7 @@ let qs = require('querystring');
 
 var width_num = 2850;
 var height_num = 1900;
+const { resize_file } = require('../pkg/ssvm_nodejs_starter_lib.js');
 //该函数用来创建一个HTTP服务器，并将 requestListener 作为 request 事件的监听函数。req请求对象，res响应对象
 http.createServer(function(req, res) {   
     let body = '';  // 一定要初始化为"" 不然是undefined
@@ -36,14 +37,13 @@ http.createServer(function(req, res) {
         if(qs.parse(body).name == 'resize') {
             if(width_num>0){ 
                 // 对图片进行裁剪
-                const { resize_file } = require('../pkg/ssvm_nodejs_starter_lib.js');
       
                 const dim = {
                     width: width_num,
                     height: height_num
                 };
 
-                resize_file(JSON.stringify([dim, 'cat.png', `test.png`]));
+                resize_file(JSON.stringify([dim, '../public/cat.png', `../public/test.png`]));
                 width_num -= 5;
                 height_num -= 5;
                 res.write('test.png');

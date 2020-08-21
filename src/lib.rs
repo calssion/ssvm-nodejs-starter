@@ -1,23 +1,9 @@
 use std::io::{BufReader, Cursor};
 use wasm_bindgen::prelude::*;
-use nodejs_helper;
 use serde::{Serialize, Deserialize};
 use image::{GenericImageView, png, ImageEncoder, ImageFormat};
 use image::imageops::FilterType;
-
-#[wasm_bindgen]
-pub fn say(s: &str) -> String {
-  println!("The Rust function say() received {}", s);
-  let r = String::from("hello ");
-  return r + s;
-}
-
-// #[wasm_bindgen]
-// pub fn fetch(url: &str) {
-//   let content = nodejs_helper::request::fetch_as_string(url);
-//   nodejs_helper::console::log(url);
-//   nodejs_helper::console::log(&content);
-// }
+use nodejs_helper;
 
 #[derive(Serialize, Deserialize)]
 #[derive(Copy, Clone, Debug)]
@@ -85,4 +71,70 @@ pub fn resize_impl(src: &Picture) -> Picture {
     dim,
     raw: cur.into_inner(),
   }
+}
+
+#[wasm_bindgen]
+pub fn create_sqlite(path: &str) {
+  let sql_create = "
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY NOT NULL, 
+  full_name TEXT NOT NULL, 
+  created DATE NOT NULL
+);";
+  let sql_insert = "
+INSERT INTO users 
+VALUES 
+(1, 'Bob McFett', '32-01-01'),
+(2, 'Angus Vader', '02-03-04'),
+(3, 'Imperator Colin', '01-01-01');";
+
+  nodejs_helper::sqlite3::create(path);
+  nodejs_helper::sqlite3::update(path, sql_create);
+  nodejs_helper::sqlite3::update(path, sql_insert);
+}
+
+#[wasm_bindgen]
+pub fn query_sqlite(path: &str) {
+  let sql_query = "SELECT * FROM users;";
+  let rows: String = nodejs_helper::sqlite3::query(path, sql_query);
+  let users: Vec<User> = serde_json::from_str(&rows).unwrap();
+  for user in users.into_iter() {
+    nodejs_helper::console::log(&(user.id.to_string() + " : " + &user.full_name));
+  }
+}
+
+#[wasm_bindgen]
+pub fn fetch(url: &str) {
+  let content = nodejs_helper::request::fetch_as_string(url);
+  nodejs_helper::console::log(url);
+  nodejs_helper::console::log(&content);
+}
+
+#[wasm_bindgen]
+pub fn download(url: &str, path: &str) {
+  let content = nodejs_helper::request::fetch(url);
+  nodejs_helper::fs::write_file_sync(path, &content);
+}
+
+#[wasm_bindgen]
+pub fn delete_file(path: &str) {
+  nodejs_helper::fs::unlink_sync(path);
+}
+
+#[wasm_bindgen]
+pub fn show_now() {
+  nodejs_helper::console::log("Timestamp now: ");
+  nodejs_helper::console::log(&nodejs_helper::date::timestamp());
+}
+
+#[wasm_bindgen]
+pub fn utc_now() {
+  nodejs_helper::console::log("UTC time: ");
+  nodejs_helper::console::log(&nodejs_helper::date::utc_string());
+}
+
+#[wasm_bindgen]
+pub fn my_time(tz: &str) {
+  nodejs_helper::console::log(tz);
+  nodejs_helper::console::log(&nodejs_helper::date::format_date("en-US", "long", "numeric", "long", "numeric", tz, "short"));
 }
