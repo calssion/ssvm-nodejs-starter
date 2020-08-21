@@ -73,9 +73,14 @@ $ wasm-pack build --target nodejs
 ```
 运行服务  
 ```
-$ node node/app.js
+$ cd node
+$ node app.js
 ```
 打开 public/show_pic.html 即可运行  
+<img src="./git_pic/1.png">  
+
+点击按钮即可开始对 cat.png 的修剪，结果保存到 test.png  
+<img src="./git_pic/2.png">  
 
 # 5、总结
 在这里，Rust 主要充当了一个优化器的角色，把一些性能要求高的操作编成 Wasm，供其他语言进行操作。  
@@ -83,4 +88,5 @@ $ node node/app.js
 整个操作过程，遇到最多的问题是环境问题和网络问题，主要是使用的这些工具需要网络的支持，还有 ubuntu 的权限限制。  
 ## 参考链接
 [入门文档：在 Node.js 应用中调用 Rust 函数](https://www.secondstate.io/articles/get-started-with-rust-functions-in-node-zh/)  
-[Learning WebAssembly, Rust, and Node.js](https://github.com/second-state/wasm-learning)
+[Learning WebAssembly, Rust, and Node.js](https://github.com/second-state/wasm-learning)  
+[ubuntu 的权限问题解决](https://stackoverflow.com/questions/46439403/ubuntu-nodejs-npm-install-g-error-eacces-permission-denied-mkdir)
